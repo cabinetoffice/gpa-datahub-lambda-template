@@ -4,16 +4,6 @@ Description: >
     {{ cookiecutter.project_name }}
 
 Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy-globals.html
-    Api:
-        EndpointConfiguration: REGIONAL
-        TracingEnabled: true
-        Cors:                               # https://awslabs.github.io/aws-lambda-powertools-python/latest/core/event_handler/api_gateway/#cors
-            # AllowOrigin: "'https://example.com'"
-            AllowOrigin: "'*'"  # Dev only
-            AllowHeaders: "'Content-Type,Authorization,X-Amz-Date'"
-            MaxAge: "'300'"
-        BinaryMediaTypes:                   # https://awslabs.github.io/aws-lambda-powertools-python/latest/core/event_handler/api_gateway/#binary-responses
-          - '*~1*'  # converts to */* for any binary type
     Function:
         Timeout: 5
         MemorySize: 256
@@ -36,6 +26,27 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
                 POWERTOOLS_METRICS_NAMESPACE: MyServerlessApplication
                 POWERTOOLS_SERVICE_NAME: hello
 
+Parameters:
+    CustomerName:
+        Type: String
+        Description: 'Enter the Customer Name'
+        Default: > 
+            {{ cookiecutter.customer_name }}
+    ProjectName:
+        Type: String
+        Description: 'Enter the Project Name'
+        Default: > 
+            {{ cookiecutter.project_name }}
+    DeploymentEnvironment:
+        Type: String
+        Description: 'Enter the Environment for the Function'
+        Default: local
+        AllowedValues:
+            - local
+            - dev
+            - stage
+            - prod
+
 Resources:
     HelloWorldFunction:
         Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
@@ -43,17 +54,6 @@ Resources:
             Handler: app.lambda_handler
             CodeUri: src/hello_world
             Description: Hello World function
-            Events:
-                HelloPath:
-                    Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
-                    Properties:
-                        Path: /hello
-                        Method: GET
-                HelloYou:
-                    Type: Api
-                    Properties:
-                        Path: /hello/{name}
-                        Method: GET
             # Policies: # Example inline policy
             #     - Version: "2012-10-17"
             #     Statement:
@@ -62,11 +62,47 @@ Resources:
             #             - "ssm:GetParameter"
             #         Resource:
             #             - "*"
+            VpcConfig:
+                SecurityGroupIds:
+                    - !Sub '{{resolve:secretsmanager:${CustomerName}/${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:lambdaoutbound-sg}}'
+                SubnetIds:
+                    - !Sub '{{resolve:secretsmanager:${CustomerName}/${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet}}'
+                    - !Sub '{{resolve:secretsmanager:${CustomerName}/${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet2}}'
             Environment:
                 Variables:
-                    PARAM1: VALUE
+                    CustomerName: !Ref CustomerName
+                    ProjectName: !Ref ProjectName
+                    DeploymentEnvironment: !Ref DeploymentEnvironment
             Tags:
                 LambdaPowertools: python
+
+    SampleBucket:
+        Type: 'AWS::S3::Bucket'
+        Properties:
+            BucketName: !Sub '${CustomerName}-${ProjectName}-samplebucket-${DeploymentEnvironment}'
+            AccessControl: Private
+            PublicAccessBlockConfiguration:
+                BlockPublicAcls: true
+                BlockPublicPolicy: false
+                IgnorePublicAcls: true
+                RestrictPublicBuckets: true
+            BucketEncryption:
+                ServerSideEncryptionConfiguration:
+                    - ServerSideEncryptionByDefault:
+                          SSEAlgorithm: AES256
+            IntelligentTieringConfigurations:
+                - Id: GlacierTieringTransition
+                  Status: Enabled
+                  Tierings:
+                      - Days: 90
+                        AccessTier: ARCHIVE_ACCESS
+
+    SampleSQS:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Sub '${CustomerName}-${ProjectName}-samplesqs-${DeploymentEnvironment}'
+            VisibilityTimeout: 660
+            DelaySeconds: 120
 
     # Sample policy to add additional permissions to your Lambda
     # HelloWorldFunctionAdditionalPermission:
@@ -92,3 +128,10 @@ Outputs:
       Description: "Hello World Lambda Function ARN"
       Value: !GetAtt HelloWorldFunction.Arn
 
+    SampleBucketName:
+        Description: "S3 Sample bucket"
+        Value: !Ref SampleBucket
+
+    SampleSQS:
+        Description: "SQS Sample"
+        Value: !Ref SampleSQS

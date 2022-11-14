@@ -1,4 +1,5 @@
 {
     "project_name": "Name of the project",
+    "customer_name": "Name of the customer (gpa)",
     "include_safe_deployment": "n"
 }
