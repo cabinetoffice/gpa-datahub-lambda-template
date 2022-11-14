@@ -61,8 +61,8 @@ Resources:
                 SecurityGroupIds:
                     - {% raw %}!Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:lambdaoutbound-sg}}'{% endraw %}
                 SubnetIds:
-                    - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet}}'
-                    - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet2}}'
+                    - {% raw %}!Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet}}'{% endraw %}
+                    - {% raw %}!Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet2}}'{% endraw %}
             Environment:
                 Variables:
                     CustomerName: !Ref CustomerName
@@ -74,7 +74,7 @@ Resources:
     SampleBucket:
         Type: 'AWS::S3::Bucket'
         Properties:
-            BucketName: !Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'
+            BucketName: {% raw %}!Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'{% endraw %}
             AccessControl: Private
             PublicAccessBlockConfiguration:
                 BlockPublicAcls: true
@@ -95,7 +95,7 @@ Resources:
     SampleSQS:
         Type: AWS::SQS::Queue
         Properties:
-            QueueName: !Sub '${ProjectName}-samplesqs-${DeploymentEnvironment}'
+            QueueName: {% raw %}!Sub '${ProjectName}-samplesqs-${DeploymentEnvironment}'{% endraw %}
             VisibilityTimeout: 660
             DelaySeconds: 120
 
