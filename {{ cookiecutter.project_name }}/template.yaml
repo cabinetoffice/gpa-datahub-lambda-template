@@ -27,11 +27,6 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
                 POWERTOOLS_SERVICE_NAME: hello
 
 Parameters:
-    CustomerName:
-        Type: String
-        Description: 'Enter the Customer Name'
-        Default: > 
-            {{ cookiecutter.customer_name }}
     ProjectName:
         Type: String
         Description: 'Enter the Project Name'
@@ -64,10 +59,10 @@ Resources:
             #             - "*"
             VpcConfig:
                 SecurityGroupIds:
-                    - !Sub '{{resolve:secretsmanager:${CustomerName}/${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:lambdaoutbound-sg}}'
+                    - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:lambdaoutbound-sg}}'
                 SubnetIds:
-                    - !Sub '{{resolve:secretsmanager:${CustomerName}/${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet}}'
-                    - !Sub '{{resolve:secretsmanager:${CustomerName}/${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet2}}'
+                    - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet}}'
+                    - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet2}}'
             Environment:
                 Variables:
                     CustomerName: !Ref CustomerName
@@ -79,7 +74,7 @@ Resources:
     SampleBucket:
         Type: 'AWS::S3::Bucket'
         Properties:
-            BucketName: !Sub '${CustomerName}-${ProjectName}-samplebucket-${DeploymentEnvironment}'
+            BucketName: !Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'
             AccessControl: Private
             PublicAccessBlockConfiguration:
                 BlockPublicAcls: true
@@ -100,7 +95,7 @@ Resources:
     SampleSQS:
         Type: AWS::SQS::Queue
         Properties:
-            QueueName: !Sub '${CustomerName}-${ProjectName}-samplesqs-${DeploymentEnvironment}'
+            QueueName: !Sub '${ProjectName}-samplesqs-${DeploymentEnvironment}'
             VisibilityTimeout: 660
             DelaySeconds: 120
 
@@ -120,10 +115,6 @@ Resources:
     #             - !Ref HelloWorldFunctionRole # Sample policy to demonstrate Implicit IAM Role created with SAM
 
 Outputs:
-    HelloWorldApigwURL:
-      Description: "API Gateway endpoint URL for Prod environment for Hello World Function"
-      Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello"
-
     HelloWorldFunction:
       Description: "Hello World Lambda Function ARN"
       Value: !GetAtt HelloWorldFunction.Arn
