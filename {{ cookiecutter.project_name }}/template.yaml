@@ -59,7 +59,7 @@ Resources:
             #             - "*"
             VpcConfig:
                 SecurityGroupIds:
-                    - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:lambdaoutbound-sg}}'
+                    - {% raw %}!Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:lambdaoutbound-sg}}'{% endraw %}
                 SubnetIds:
                     - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet}}'
                     - !Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet2}}'
