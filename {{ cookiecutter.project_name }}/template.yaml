@@ -41,7 +41,7 @@ Resources:
         Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
         Properties:
             Handler: app.lambda_handler
-            CodeUri: hello_world
+            CodeUri: src/hello_world
             Description: Hello World function
             Events:
                 HelloPath:
