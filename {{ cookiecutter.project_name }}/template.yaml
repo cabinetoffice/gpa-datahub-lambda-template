@@ -84,7 +84,11 @@ Resources:
                     - 'arn:aws:lambda:eu-west-2:${AWS::AccountId}:layer:pygpalogging:${pygpaloggingVersion}'
                     - { pygpaloggingVersion: !FindInMap [ Environments, !Ref DeploymentEnvironment, pygpaloggingversion ] }
             Tags:
-                LambdaPowertools: python
+                Env: !Sub '${DeploymentEnvironment}'
+                ManagedBy: 'Cloudformation'
+                Owner: 'Thomas Anderson'
+                ApplicationRole: 'My Sample Application'
+                # Name is intentionally not included here - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-lambda-function.html#aws-resource-lambda-function-properties
 
     SampleBucket:
         Type: 'AWS::S3::Bucket'
@@ -106,6 +110,18 @@ Resources:
                   Tierings:
                       - Days: 90
                         AccessTier: ARCHIVE_ACCESS
+            Tags:
+                - Key: 'Env'
+                  Value: !Sub '${DeploymentEnvironment}'
+                - Key: 'ManagedBy'
+                  Value: 'Cloudformation'
+                - Key: 'Owner'
+                  Value: 'Thomas Anderson'
+                - Key: 'ApplicationRole'
+                  Value: 'My Sample Application'
+                - Key: 'Name'
+                  Value: {% raw %}!Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'{% endraw %}
+
 
     SampleSQS:
         Type: AWS::SQS::Queue
@@ -113,6 +129,17 @@ Resources:
             QueueName: {% raw %}!Sub '${ProjectName}-samplesqs-${DeploymentEnvironment}'{% endraw %}
             VisibilityTimeout: 660
             DelaySeconds: 120
+            Tags:
+                - Key: 'Env'
+                  Value: !Sub '${DeploymentEnvironment}'
+                - Key: 'ManagedBy'
+                  Value: 'Cloudformation'
+                - Key: 'Owner'
+                  Value: 'Thomas Anderson'
+                - Key: 'ApplicationRole'
+                  Value: 'My Sample Application'
+                - Key: 'Name'
+                  Value: { % raw % }!Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'{ % endraw % }
 
     SampleRole:
         Type: 'AWS::IAM::Role'
@@ -139,6 +166,17 @@ Resources:
                 - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
                 - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
                 - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+            Tags:
+                - Key: 'Env'
+                  Value: !Sub '${DeploymentEnvironment}'
+                - Key: 'ManagedBy'
+                  Value: 'Cloudformation'
+                - Key: 'Owner'
+                  Value: 'Thomas Anderson'
+                - Key: 'ApplicationRole'
+                  Value: 'My Sample Application'
+                - Key: 'Name'
+                  Value: { % raw % }!Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'{ % endraw % }
 
     # Sample policy to add additional permissions to your Lambda
     # HelloWorldFunctionAdditionalPermission:
