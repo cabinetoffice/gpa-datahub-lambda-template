@@ -76,7 +76,6 @@ Resources:
                     - {% raw %}!Sub '{{resolve:secretsmanager:${ProjectName}/VPCInfo/${DeploymentEnvironment}:SecretString:privatesubnet2}}'{% endraw %}
             Environment:
                 Variables:
-                    CustomerName: !Ref CustomerName
                     ProjectName: !Ref ProjectName
                     DeploymentEnvironment: !Ref DeploymentEnvironment
             Layers:
