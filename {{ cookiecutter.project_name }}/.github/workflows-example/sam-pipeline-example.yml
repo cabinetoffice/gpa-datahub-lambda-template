@@ -1,0 +1,24 @@
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    branches:
+      - $YOUR_ENV
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - uses: aws-actions/setup-sam@v2
+      - uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: eu-west-2
+          role-to-assume: $ROLE_TO_ASSUME
+
+      - run: sam build
+      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env $YOUR_ENV

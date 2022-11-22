@@ -1,4 +1,7 @@
 {
     "project_name": "Name of the project",
+    "oidc_arn": "OIDC Arn via IAM console",
+    "deployment_repo": "Org and repository name (e.g. cabinetoffice/gpa-datahub-example",
+    "sam_cli_source_bucket": "Sam CLI default s3 bucket",
     "include_safe_deployment": "n"
 }

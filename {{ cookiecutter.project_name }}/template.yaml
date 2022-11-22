@@ -41,6 +41,21 @@ Parameters:
             - dev
             - stage
             - prod
+    OIDCArn:
+        Type: String
+        Description: 'ARN of the OIDC connection'
+        Default: > 
+            {{ cookiecutter.oidc_arn }}
+    DeploymentRepo:
+        Type: String
+        Description: 'Org and Repository name'
+        Default: > 
+            {{ cookiecutter.deployment_repo }}
+    SamCliSourceBucket:
+        Type: String
+        Description: 'Sam CLI default s3 bucket'
+        Default: >
+            {{ cookiecutter.sam_cli_source_bucket }}
 
 Mappings:
     Environments:
@@ -54,7 +69,7 @@ Mappings:
             pygpaloggingversion: 1
 
 Resources:
-    HelloWorldFunction:
+        HelloWorldFunction:
         Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
         Properties:
             FunctionName: !Sub '${ProjectName}-${DeploymentEnvironment}'
@@ -141,58 +156,84 @@ Resources:
                 - Key: 'Name'
                   Value: { % raw % }!Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'{ % endraw % }
 
-    SampleRole:
+    PipelineRole:
         Type: 'AWS::IAM::Role'
         Properties:
-            RoleName: !Sub '${ProjectName}-samplerole-${DeploymentEnvironment}'
-            Description: 'This is a sample role'
-            AssumeRolePolicyDocument:
-                Version: 2012-10-17
-                Statement:
-                    - Effect: Allow
-                      Principal:
-                          Service:
-                              - lambda.amazonaws.com
-                      Action:
-                          - 'sts:AssumeRole'
+            RoleName: !Sub '${ProjectName}-pipeline-${DeploymentEnvironment}'
+            Description: !Sub 'Pipeline role for ${ProjectName} ${DeploymentEnvironment}'
+            AssumeRolePolicyDocument: !Sub
+                - |
+                    {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Principal": {
+                                    "Federated": "${OIDCArn}"
+                                },
+                                "Action": "sts:AssumeRoleWithWebIdentity",
+                                "Condition": {
+                                    "ForAllValues:StringLike": {
+                                        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                                        "token.actions.githubusercontent.com:sub": "repo:${DeploymentRepo}:ref:refs/heads/${DeploymentEnvironment}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                - DeploymentEnvironment: !Ref DeploymentEnvironment
+                - OIDCArn: !Ref OIDCArn
+                - DeploymentRepo: !Ref DeploymentRepo
             Path: /
-            ManagedPolicyArns:
-                - arn:aws:iam::aws:policy/SecretsManagerReadWrite
-                - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
-                - arn:aws:iam::aws:policy/AmazonS3FullAccess
-                - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
-                - arn:aws:iam::aws:policy/AmazonSNSFullAccess
-                - arn:aws:iam::aws:policy/AmazonSQSFullAccess
-                - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
-                - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-                - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+            Policies:
+                - PolicyName: !Sub 'Pipeline${ProjectName}${DeploymentEnvironment}'
+                  PolicyDocument:
+                      Version: 2012-10-17
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - 'iam:GetRole'
+                                - 'iam:PutRolePolicy'
+                                - 'iam:DeleteRolePolicy'
+                                - 'lambda:ListTags'
+                            Resource: '*'
+                          - Effect: Allow
+                            Action:
+                                - 'lambda:UpdateFunctionCode'
+                            Resource: !GetAtt HelloWorldFunction.Arn
+                          - Effect: Allow
+                            Action:
+                                - "cloudformation:CreateChangeSet"
+                                - "cloudformation:DescribeChangeSet"
+                                - "cloudformation:ExecuteChangeSet"
+                                - "cloudformation:DeleteStack"
+                                - "cloudformation:DescribeStackEvents"
+                                - "cloudformation:DescribeStacks"
+                                - "cloudformation:GetTemplate"
+                                - "cloudformation:GetTemplateSummary"
+                                - "cloudformation:DescribeStackResource"
+                            Resource: '*'
+                          - Effect: Allow
+                            Action:
+                                - "s3:DeleteObject"
+                                - "s3:GetObject*"
+                                - "s3:PutObject*"
+                                - "s3:GetBucket*"
+                                - "s3:List*"
+                            Resource:
+                                - !Sub "${SamCliSourceBucket}/*"
+                                - !Sub "${SamCliSourceBucket}"
             Tags:
                 - Key: 'Env'
                   Value: !Sub '${DeploymentEnvironment}'
                 - Key: 'ManagedBy'
                   Value: 'Cloudformation'
                 - Key: 'Owner'
-                  Value: 'Thomas Anderson'
+                  Value: 'Mike Bell'
                 - Key: 'ApplicationRole'
-                  Value: 'My Sample Application'
+                  Value: 'Example Lambda'
                 - Key: 'Name'
-                  Value: { % raw % }!Sub '${ProjectName}-samplebucket-${DeploymentEnvironment}'{ % endraw % }
-
-    # Sample policy to add additional permissions to your Lambda
-    # HelloWorldFunctionAdditionalPermission:
-    #     Type: "AWS::IAM::Policy"
-    #     Properties:
-    #         PolicyName: "root"
-    #         PolicyDocument:
-    #             Version: "2012-10-17"
-    #             Statement:
-    #                 -
-    #                     Effect: "Allow"
-    #                     Action: "ssm:GetParameters"
-    #                     Resource: "*"
-    #         Roles:
-    #             - !Ref HelloWorldFunctionRole # Sample policy to demonstrate Implicit IAM Role created with SAM
-
+                  Value: !Sub '${ProjectName}-pipeline-${DeploymentEnvironment}'
 Outputs:
     HelloWorldFunction:
       Description: "Hello World Lambda Function ARN"
