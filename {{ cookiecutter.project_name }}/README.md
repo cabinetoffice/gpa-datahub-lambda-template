@@ -15,12 +15,6 @@ It is important to note that you should not try to `git clone` this project but 
 
 ## Usage
 
-To initialise the project run the following command:
-
-```
-sam init --location gh:cabinetoffice/gpa-datahub-lambda-template
-```
-
 ### First run
 
 Build your lambda function read for deployment
