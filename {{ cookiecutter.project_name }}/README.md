@@ -1,19 +1,8 @@
-# {{ cookiecutter.project_name }}
+# Cookiecutter SAM for Python Lambda functions
 
-This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes [Lambda Powertools for operational best practices](https://github.com/awslabs/aws-lambda-powertools-python), and the following files and folders.
+This is a [Cookiecutter](https://github.com/audreyr/cookiecutter) template to create a Serverless App based on Serverless Application Model (SAM) and Python 3.9.
 
-- **`hello_world`** - Code for the application's Lambda function.
-- **`events`** - Invocation events that you can use to invoke the function.
-- **`tests`** - Unit tests for the application code. 
-- **`template.yaml`** - A template that defines the application's AWS resources.
-- **`Makefile`** - Makefile for your convenience to install deps, build, invoke, and deploy your application.
-
-If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.  
-
-* [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
-* [PyCharm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
+It is important to note that you should not try to `git clone` this project but use `SAM` CLI instead as ``{{cookiecutter.project_slug}}`` will be rendered based on your input and therefore all variables and files will be rendered properly.
 
 ## Requirements
 
@@ -24,25 +13,79 @@ If you prefer to use an integrated development environment (IDE) to build and te
 * [Python 3 installed](https://www.python.org/downloads/)
 * Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
 
-## Deploy the sample application
+## Usage
 
-> **Already know this sample? Run: `make hurry` - This command will install app deps, build, and deploy your Serverless application using SAM.**
+To initialise the project run the following command:
 
-Build and deploy your application for the first time by running the following commands in your shell:
-
-```bash
-{{ cookiecutter.project_name }}$ make build
-{{ cookiecutter.project_name }}$ make deploy.guided
+```
+sam init --location gh:cabinetoffice/gpa-datahub-lambda-template
 ```
 
-The first command will **build** the source of your application within a Docker container. The second command will **package and deploy** your application to AWS. Guided deploy means SAM CLI will ask you about the name of your deployment/stack, AWS Region, and whether you want to save your choices, so that you can use `make deploy` next time.
+### First run
+
+Build your lambda function read for deployment
+
+`sam build`
+
+Create the infrastructure for each env (dev/stage/prod etc)
+
+`sam build && sam deploy --guided --capabilities CAPABILITY_NAMED_IAM`
+
+Sample deployment settings
+
+```
+Configuring SAM deploy
+======================
+
+Looking for config file [samconfig.toml] :  Not found
+
+Setting default arguments for 'sam deploy'
+=========================================
+Stack Name [sam-app]: datahub-samplefunction-dev
+AWS Region [eu-west-2]:
+Parameter ProjectName [datahub-samplefunction]:
+Parameter DeploymentEnvironment [local]: dev
+#Shows you resources changes to be deployed and require a 'Y' to initiate deploy
+Confirm changes before deploy [y/N]:
+#SAM needs permission to be able to create roles to connect to the resources in your template
+Allow SAM CLI IAM role creation [Y/n]:
+#Preserves the state of previously provisioned resources when an operation fails
+Disable rollback [y/N]:
+Save arguments to configuration file [Y/n]:
+SAM configuration file [samconfig.toml]:
+SAM configuration environment [default]: dev
+```
+
+You should now have your environment configuration setup.
+
+Use the following below to deploy to your new environment
+
+`sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env dev`
+
+#### Modifying the pipeline
+
+There is an example Github action file that can be modified to automatically deploy your lambda function based on which branch is being worked on.
+
+1. Rename `.github/workflows-example` to `.github/workflows`
+2. Rename `sam-pipeline-example.yml` to `sam-pipeline-$YOUR_ENV.yml`
+3. Update any `$` reference with your own values
+   1. `$YOUR_ENV` - `dev/stage/prod`. Ensure branch name matches env name.
+   2. `$ROLE_TO_ASSUME` - ARN of the role that was created when you ran `sam deploy` above.
+
+Add your changed pipeline to  git and push to Github. Your pipeline should now be active.
+
+## Options
+
+Option | Description
+------------------------------------------------- | ---------------------------------------------------------------------------------
+`include_safe_deployment` | Sends by default 10% of traffic for every 1 minute to a newly deployed function using [CodeDeploy + SAM integration](https://github.com/awslabs/serverless-application-model/blob/master/docs/safe_lambda_deployments.rst) - Linear10PercentEvery1Minute
 
 ## Use the SAM CLI to build and test locally
 
 Whenever you change your application code, you'll have to run build command:
 
 ```bash
-{{ cookiecutter.project_name }}$ make build
+{{ cookiecutter.project_name }}$ sam build --use-container
 ```
 
 The SAM CLI installs dependencies defined in `hello_world/requirements.txt`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
@@ -50,28 +93,12 @@ The SAM CLI installs dependencies defined in `hello_world/requirements.txt`, cre
 Test a single function by invoking it directly with a test event:
 
 ```bash
-{{ cookiecutter.project_name }}$ make invoke
+{{ cookiecutter.project_name }}$ sam local invoke HelloWorldFunction --event events/hello.json
 ```
 
 > An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
 
-The SAM CLI can also emulate your application's API. Use the `make run` to run the API locally on port 3000.
-
-```bash
-{{ cookiecutter.project_name }}$ make run
-{{ cookiecutter.project_name }}$ curl http://localhost:3000/hello
-```
-
 The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
-
-```yaml
-      Events:
-        HelloWorld:
-          Type: Api
-          Properties:
-            Path: /hello
-            Method: get
-```
 
 ## Fetch, tail, and filter Lambda function logs
 
@@ -85,17 +112,6 @@ To simplify troubleshooting, SAM CLI has a command called `sam logs`. `sam logs`
 
 You can find more information and examples about filtering Lambda function logs in the [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
 
-## Unit tests
-
-Tests are defined in the `tests` folder in this project, and we use Pytest as the test runner for this sample project.
-
-Make sure you install dev dependencies before you run tests with `make dev`:
-
-```bash
-{{ cookiecutter.project_name }}$ make dev
-{{ cookiecutter.project_name }}$ make test
-```
-
 ## Cleanup
 
 To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
@@ -104,35 +120,12 @@ To delete the sample application that you created, use the AWS CLI. Assuming you
 {{ cookiecutter.project_name }}$ aws cloudformation delete-stack --stack-name {{ cookiecutter.project_name }}
 ```
 
-# Appendix
+# Credits
 
-## Powertools
+* This project has been generated with [Cookiecutter](https://github.com/audreyr/cookiecutter)
+* [Bruno Alla's Lambda function template](https://github.com/browniebroke/cookiecutter-lambda-function)
 
-**Tracing**
+License
+-------
 
-[Tracer utility](https://awslabs.github.io/aws-lambda-powertools-python/core/tracer/) patches known libraries, and trace the execution of this sample code including the response and exceptions as tracing metadata - You can visualize them in AWS X-Ray.
-
-**Logger**
-
-[Logger utility](https://awslabs.github.io/aws-lambda-powertools-python/core/logger/) creates an opinionated application Logger with structured logging as the output, dynamically samples 10% of your logs in DEBUG mode for concurrent invocations, log incoming events as your function is invoked, and injects key information from Lambda context object into your Logger - You can visualize them in Amazon CloudWatch Logs.
-
-**Metrics**
-
-[Metrics utility](https://awslabs.github.io/aws-lambda-powertools-python/core/metrics/) captures cold start metric of your Lambda invocation, and could add additional metrics to help you understand your application KPIs - You can visualize them in Amazon CloudWatch.
-
-## Makefile
-
-We included a `Makefile` for your convenience - You can find all commands you can use by running `make`. Under the hood, we're using SAM CLI commands to run these common tasks:
-
-* **`make build`**: `sam build --use-container`
-* **`make deploy.guided`**: `sam deploy --guided`
-* **`make invoke`**: `sam local invoke HelloWorldFunction --event events/hello_world_event.json`
-* **`make run`**: `sam local start-api`
-
-## Sync project with function dependencies
-
-Pipenv takes care of isolating dev dependencies and app dependencies. As SAM CLI requires a `requirements.txt` file, you'd need to generate one if new app dependencies have been added:
-
-```bash
-{{ cookiecutter.project_name }}$ pipenv lock -r > hello_world/requirements.txt
-```
+This project is licensed under the terms of the [MIT License with no attribution](/LICENSE)
