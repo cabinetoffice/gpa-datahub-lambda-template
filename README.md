@@ -1,20 +1,24 @@
 # Cookiecutter SAM for Python Lambda functions
 
-This is a [Cookiecutter](https://github.com/audreyr/cookiecutter) template to create a Serverless App based on Serverless Application Model (SAM) and Python 3.9.
+This is a [Cookiecutter](https://github.com/audreyr/cookiecutter) template to create a Serverless App based on
+Serverless Application Model (SAM) and Python 3.9.
 
-It is important to note that you should not try to `git clone` this project but use `SAM` CLI instead as ``{{cookiecutter.project_slug}}`` will be rendered based on your input and therefore all variables and files will be rendered properly.
+It is important to note that you should not try to `git clone` this project but use `SAM` CLI instead
+as ``{{cookiecutter.project_slug}}`` will be rendered based on your input and therefore all variables and files will be
+rendered properly.
 
 ## Usage
 
 Generate a new SAM based Serverless App: `sam init --location gh:cabinetoffice/gpa-datahub-lambda-template`
 
-You'll be prompted a few questions to help this cookiecutter template to scaffold this project and after its completed you should see a new folder at your current path with the name of the project you gave as input.
+You'll be prompted a few questions to help this cookiecutter template to scaffold this project and after its completed
+you should see a new folder at your current path with the name of the project you gave as input.
 
 ## Options
 
-Option | Description
-------------------------------------------------- | ---------------------------------------------------------------------------------
-`include_safe_deployment` | Sends by default 10% of traffic for every 1 minute to a newly deployed function using [CodeDeploy + SAM integration](https://github.com/awslabs/serverless-application-model/blob/master/docs/safe_lambda_deployments.rst) - Linear10PercentEvery1Minute
+ Option                    | Description                                                                                                                                                                                                                                              
+---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ `include_safe_deployment` | Sends by default 10% of traffic for every 1 minute to a newly deployed function using [CodeDeploy + SAM integration](https://github.com/awslabs/serverless-application-model/blob/master/docs/safe_lambda_deployments.rst) - Linear10PercentEvery1Minute 
 
 # Credits
 
@@ -25,3 +29,57 @@ License
 -------
 
 This project is licensed under the terms of the [MIT License with no attribution](/LICENSE)
+
+## Checking before committing
+
+Check formatting of code and that tests work before making a commit by running command:
+
+```bash
+make check
+```
+
+Or, if using Python3:
+
+```bash
+make check3
+```
+
+## Formatting
+
+Check formatting of code before making a commit by running command:
+
+```bash
+make flake
+```
+
+Or, if using Python3:
+
+```bash
+make flake3
+```
+
+This will produce formatting errors you need to fix
+
+## Tests
+
+### Unit tests
+
+Run with:
+
+```bash
+make unit
+```
+
+Or, if using Python3:
+
+```bash
+make unit3
+```
+
+### Integration tests
+
+Run with:
+
+```bash
+TBC
+```
